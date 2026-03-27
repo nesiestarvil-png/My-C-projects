@@ -1,0 +1,80 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Structure checks
+      id: structure-checks
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Structure checks
+        setup-command: make
+        command: bash tests/test_structure.sh
+        timeout: 10
+        max-score: 10
+    - name: compile
+      id: compile
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: compile
+        setup-command: ''
+        command: make
+        timeout: 10
+        max-score: 5
+    - name: Invalid connection
+      id: invalid-connection
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Invalid connection
+        setup-command: make
+        command: bash tests/test_invalid_connection.sh
+        timeout: 10
+        max-score: 10
+    - name: WARNING case
+      id: warning-case
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: WARNING case
+        setup-command: make
+        command: bash tests/test_warning.sh
+        timeout: 10
+        max-score: 15
+    - name: Parallel SAFE case
+      id: parallel-safe-case
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Parallel SAFE case
+        setup-command: make
+        command: bash tests/test_parallel_safe.sh
+        timeout: 10
+        max-score: 15
+    - name: Series SAFE case
+      id: series-safe-case
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Series SAFE case
+        setup-command: make
+        command: bash tests/test_series_safe.sh
+        timeout: 10
+        max-score: 15
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        STRUCTURE-CHECKS_RESULTS: "${{steps.structure-checks.outputs.result}}"
+        COMPILE_RESULTS: "${{steps.compile.outputs.result}}"
+        INVALID-CONNECTION_RESULTS: "${{steps.invalid-connection.outputs.result}}"
+        WARNING-CASE_RESULTS: "${{steps.warning-case.outputs.result}}"
+        PARALLEL-SAFE-CASE_RESULTS: "${{steps.parallel-safe-case.outputs.result}}"
+        SERIES-SAFE-CASE_RESULTS: "${{steps.series-safe-case.outputs.result}}"
+      with:
+        runners: structure-checks,compile,invalid-connection,warning-case,parallel-safe-case,series-safe-case
